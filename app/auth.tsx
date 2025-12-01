@@ -19,6 +19,8 @@ export default function AuthScreen() {
       setError("Passwords must be at least 6 characters long");
       return;
     }
+
+    setError(null);
   }
 
   const handleSwitchMode = () => {
