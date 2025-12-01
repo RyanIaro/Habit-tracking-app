@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 import { ID } from "react-native-appwrite";
 import { account } from "./appwrite";
 
@@ -36,10 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ signIn, signUp}}>
+    <AuthContext.Provider value={{ signIn, signUp }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {}
+export function useAuth() {
+  const context = useContext(AuthContext);
+  
+  if(context === undefined) {
+    throw new Error("useAuth must be inside of the AuthProvider");
+  }
+
+  return context;
+}
