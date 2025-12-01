@@ -2,14 +2,15 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { ID, Models } from "react-native-appwrite";
 import { account } from "./appwrite";
 
-type authContexType = {
+type authContextType = {
   user: Models.User<Models.Preferences> | null,
   isLoadingUser: boolean,
-  signIn: (email: string, password: string) => Promise<string | undefined>;
-  signUp: (email: string, password: string) => Promise<string | undefined>;
+  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<string | null>;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<authContexType | undefined>(undefined);
+const AuthContext = createContext<authContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
@@ -32,7 +33,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      await account.createEmailPasswordSession({email, password})
+      await account.createEmailPasswordSession({email, password});
+      const session = await account.get();
+      setUser(session);
+      return null;
     } catch(error) {
       if (error instanceof Error) {
         return error.message;
@@ -45,7 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const userId = ID.unique();
       await account.create({userId, email, password});
-      await signIn(email, password)
+      await signIn(email, password);
+      return null;
     } catch(error) {
       if (error instanceof Error) {
         return error.message;
@@ -54,8 +59,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signOut = async () => {
+    try {
+      await account.deleteSession({sessionId: "current"});
+      setUser(null);
+    } catch(error) {
+      console.log(error);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoadingUser, signIn, signUp }}>
+    <AuthContext.Provider value={{ user, isLoadingUser, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
