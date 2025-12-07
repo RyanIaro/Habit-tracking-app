@@ -68,7 +68,6 @@ export default function AuthScreen() {
         <TextInput
         label="Password"
         autoCapitalize="none"
-        keyboardType="visible-password"
         secureTextEntry
         mode="outlined"
         style={styles.input}
