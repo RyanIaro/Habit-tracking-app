@@ -1,4 +1,4 @@
-import { databaseId, databases, habitsTableId } from "@/lib/appwrite";
+import { client, databaseId, databases, habitsTableId, RealtimeResponse } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -12,7 +12,24 @@ export default function Index() {
   const [habits, setHabits] = useState<Habit[]>();
   
   useEffect(() => {
-    fetchHabits();
+    if (user) {
+      const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
+      const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
+        if(response.events.includes("databases.*.collections.*.documents.*.create")) {
+          fetchHabits();
+        } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
+          fetchHabits();
+        } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
+          fetchHabits();
+        }
+      });
+
+      fetchHabits();
+      //unsubscribe      
+      return () => {
+        habitsSubscription();
+      };
+    }
   },[user]);
 
   const fetchHabits = async () => {

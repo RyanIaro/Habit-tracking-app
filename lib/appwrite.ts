@@ -11,3 +11,8 @@ export const databases = new TablesDB(client);
 
 export const databaseId = process.env.EXPO_PUBLIC_BD_ID!;
 export const habitsTableId = process.env.EXPO_PUBLIC_HABITS_TABLE_ID!;
+
+export interface RealtimeResponse {
+  events: string[];
+  payload: any;
+}
