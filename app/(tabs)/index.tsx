@@ -1,34 +1,36 @@
-import { client, databaseId, databases, habitsTableId, RealtimeResponse } from "@/lib/appwrite";
+import { databaseId, databases, habitsTableId } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
+import { Swipeable } from "react-native-gesture-handler";
 import { Button, Surface, Text } from "react-native-paper";
 
 export default function Index() {
   const { signOut, user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>();
-  
+  const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
+
   useEffect(() => {
     if (user) {
-      const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
-      const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
-        if(response.events.includes("databases.*.collections.*.documents.*.create")) {
-          fetchHabits();
-        } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-          fetchHabits();
-        } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-          fetchHabits();
-        }
-      });
+      // const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
+      // const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
+      //   if(response.events.includes("databases.*.collections.*.documents.*.create")) {
+      //     fetchHabits();
+      //   } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
+      //     fetchHabits();
+      //   } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
+      //     fetchHabits();
+      //   }
+      // });
 
       fetchHabits();
       //unsubscribe      
-      return () => {
-        habitsSubscription();
-      };
+      // return () => {
+      //   habitsSubscription();
+      // };
     }
   },[user]);
 
@@ -46,6 +48,17 @@ export default function Index() {
     }
   };
   
+  const renderLeftActions = () => (
+      <View style={styles.swipeLeftAction}>
+        <MaterialCommunityIcons name="trash-can-outline" size={32} color="#fff"/>
+      </View>
+  )
+  const renderRightActions = () => (
+      <View style={styles.swipeRightAction}>
+        <MaterialCommunityIcons name="check-circle-outline" size={32} color="#fff"/>
+      </View>
+  )
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -71,28 +84,38 @@ export default function Index() {
           </View>
         ) : (
           habits?.map((habit, key) => (
-            <Surface
+            <Swipeable
+            ref={(ref) => {
+              swipeableRefs.current[habit.$id] = ref;
+            }}
             key={key}
-            style={styles.card}
-            elevation={0}
+            overshootLeft={false}
+            overshootRight={false}
+            renderLeftActions={renderLeftActions}
+            renderRightActions={renderRightActions}
             >
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{habit.title}</Text>
-                <Text style={styles.cardDescription}>{habit.description}</Text>
-                <View style={styles.cardFooter}>
-                  <View style={styles.streakBadge}>
-                    <MaterialCommunityIcons name="fire" size={18} color={"#ff9800"}/>
-                    <Text style={styles.streakText}>{habit.streak_count} day(s) streak</Text>
-                  </View>
-                  <View style={styles.frequencyBadge}>
-                    <Text style={styles.frequencyText}>{
-                      habit.frequency.charAt(0).toUpperCase() +
-                      habit.frequency.slice(1)
-                    }</Text>
+              <Surface
+              style={styles.card}
+              elevation={0}
+              >
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardTitle}>{habit.title}</Text>
+                  <Text style={styles.cardDescription}>{habit.description}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.streakBadge}>
+                      <MaterialCommunityIcons name="fire" size={18} color={"#ff9800"}/>
+                      <Text style={styles.streakText}>{habit.streak_count} day(s) streak</Text>
+                    </View>
+                    <View style={styles.frequencyBadge}>
+                      <Text style={styles.frequencyText}>{
+                        habit.frequency.charAt(0).toUpperCase() +
+                        habit.frequency.slice(1)
+                      }</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Surface>
+              </Surface>
+            </Swipeable>
           ))
         )}
       </ScrollView> 
@@ -176,5 +199,25 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     color: "#666666",
+  },
+  swipeLeftAction: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "flex-start",
+    backgroundColor: "#e53935",
+    borderRadius: 18,
+    marginBottom: 18,
+    marginTop: 2,
+    paddingLeft: 16,
+  },
+  swipeRightAction: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "flex-end",
+    backgroundColor: "#4caf50",
+    borderRadius: 18,
+    marginBottom: 18,
+    marginTop: 2,
+    paddingRight: 16,
   },
 });
