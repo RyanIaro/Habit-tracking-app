@@ -1,8 +1,8 @@
-import { databaseId, databases, habitsTableId } from "@/lib/appwrite";
+import { client, databaseId, databases, habitsTableId, RealtimeResponse } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
@@ -13,28 +13,7 @@ export default function Index() {
   const [habits, setHabits] = useState<Habit[]>();
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
 
-  useEffect(() => {
-    if (user) {
-      // const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
-      // const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
-      //   if(response.events.includes("databases.*.collections.*.documents.*.create")) {
-      //     fetchHabits();
-      //   } else if (response.events.includes("databases.*.collections.*.documents.*.update")) {
-      //     fetchHabits();
-      //   } else if (response.events.includes("databases.*.collections.*.documents.*.delete")) {
-      //     fetchHabits();
-      //   }
-      // });
-
-      fetchHabits();
-      //unsubscribe      
-      // return () => {
-      //   habitsSubscription();
-      // };
-    }
-  },[user]);
-
-  const fetchHabits = async () => {
+  const fetchHabits = useCallback(async () => {
     try {
       const response = await databases.listRows({
         databaseId,
@@ -46,8 +25,29 @@ export default function Index() {
     } catch (error) {
       console.error(error);
     }
-  };
-  
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
+      const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
+        if(response.events.includes(".create")) {
+          fetchHabits();
+        } else if (response.events.includes(".update")) {
+          fetchHabits();
+        } else if (response.events.includes(".delete")) {
+          fetchHabits();
+        }
+      });
+
+      fetchHabits();
+      // unsubscribe      
+      return () => {
+        habitsSubscription();
+      };
+    }
+  },[user, fetchHabits]);
+
   const renderLeftActions = () => (
       <View style={styles.swipeLeftAction}>
         <MaterialCommunityIcons name="trash-can-outline" size={32} color="#fff"/>
@@ -66,7 +66,7 @@ export default function Index() {
         variant="headlineSmall"
         style={styles.title}
         >
-          Today's habit
+          {"Today\u2019s habit"}
         </Text>
         <Button
         mode="text"
