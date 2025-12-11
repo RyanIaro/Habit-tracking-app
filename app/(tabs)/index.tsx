@@ -31,11 +31,11 @@ export default function Index() {
     if (user) {
       const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
       const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
-        if(response.events.includes(".create")) {
+        if(response.events.some((e) => e.includes(".create"))) {
           fetchHabits();
-        } else if (response.events.includes(".update")) {
+        } else if (response.events.some((e) => e.includes(".update"))) {
           fetchHabits();
-        } else if (response.events.includes(".delete")) {
+        } else if (response.events.some((e) => e.includes(".delete"))) {
           fetchHabits();
         }
       });
