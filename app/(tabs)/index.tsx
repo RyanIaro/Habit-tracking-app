@@ -48,6 +48,16 @@ export default function Index() {
     }
   },[user, fetchHabits]);
 
+  
+  
+  const handleDeleteHabit = async (id: string) => {
+    try {
+      await databases.deleteRow({databaseId, tableId: habitsTableId, rowId: id});
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   const renderLeftActions = () => (
       <View style={styles.swipeLeftAction}>
         <MaterialCommunityIcons name="trash-can-outline" size={32} color="#fff"/>
@@ -93,6 +103,12 @@ export default function Index() {
             overshootRight={false}
             renderLeftActions={renderLeftActions}
             renderRightActions={renderRightActions}
+            onSwipeableOpen={(direction) => {
+              if(direction === "left") {
+                handleDeleteHabit(habit.$id);
+              }
+              swipeableRefs.current[habit.$id]?.close();
+            }}
             >
               <Surface
               style={styles.card}
