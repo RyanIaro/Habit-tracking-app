@@ -1,6 +1,6 @@
 import { client, completionsTableId, databaseId, databases, habitsTableId, RealtimeResponse } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
-import { Habit } from "@/types/database.type";
+import { Habit, HabitCompletion } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -11,6 +11,7 @@ import { Button, Surface, Text } from "react-native-paper";
 export default function Index() {
   const { signOut, user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>();
+  const [completed, setCompleted] = useState<string[]>();
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
 
   const fetchHabits = useCallback(async () => {
@@ -27,10 +28,29 @@ export default function Index() {
     }
   }, [user]);
 
+  const fetchTodayCompletions = useCallback(async () => {
+    try {
+      let today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const response = await databases.listRows({
+        databaseId,
+        tableId: completionsTableId,
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.greaterThanEqual("user_id", user?.$id ?? "")
+        ],
+      });
+      const completedHabits = response.rows as HabitCompletion[];
+      setCompleted(completedHabits.map((c) => c.habit_id));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [user]);
+  
   useEffect(() => {
     if (user) {
-      const channel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
-      const habitsSubscription = client.subscribe(channel, (response: RealtimeResponse) => {
+      const habitsChannel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
+      const habitsSubscription = client.subscribe(habitsChannel, (response: RealtimeResponse) => {
         if(response.events.some((e) => e.includes(".create"))) {
           fetchHabits();
         } else if (response.events.some((e) => e.includes(".update"))) {
@@ -39,14 +59,24 @@ export default function Index() {
           fetchHabits();
         }
       });
+      
+      const completionsChannel = `databases.${databaseId}.collections.${completionsTableId}.documents`;
+      const completionsSubscription = client.subscribe(completionsChannel, (response: RealtimeResponse) => {
+        if(response.events.some((e) => e.includes(".create"))) {
+          fetchTodayCompletions();
+        }
+      });
 
       fetchHabits();
+      fetchTodayCompletions();
+
       // unsubscribe      
       return () => {
         habitsSubscription();
+        completionsSubscription();
       };
     }
-  },[user, fetchHabits]);
+  },[user, fetchHabits, fetchTodayCompletions]);
 
   
   
@@ -58,7 +88,7 @@ export default function Index() {
     }
   }
   const handleCompleteHabit = async (id: string) => {
-    if (!user) return;
+    if (!user || completed?.includes(id)) return;
     try {
       const currentDate = new Date().toISOString();
 
