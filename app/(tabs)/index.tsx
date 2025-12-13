@@ -37,7 +37,7 @@ export default function Index() {
         tableId: completionsTableId,
         queries: [
           Query.equal("user_id", user?.$id ?? ""),
-          Query.greaterThanEqual("user_id", user?.$id ?? "")
+          Query.greaterThanEqual("completed_at", today.toISOString())
         ],
       });
       const completedHabits = response.rows as HabitCompletion[];
