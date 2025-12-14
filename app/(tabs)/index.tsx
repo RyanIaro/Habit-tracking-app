@@ -120,14 +120,20 @@ export default function Index() {
     }
   }
 
+  const isHabitCompleted = (habitId: string) => completed?.includes(habitId);
+
   const renderLeftActions = () => (
       <View style={styles.swipeLeftAction}>
         <MaterialCommunityIcons name="trash-can-outline" size={32} color="#fff"/>
       </View>
   )
-  const renderRightActions = () => (
+  const renderRightActions = (habitId: string) => (
       <View style={styles.swipeRightAction}>
+      {isHabitCompleted(habitId) ? (
+        <Text style={{color: "#fff"}}>Completed!</Text>
+      ) : (
         <MaterialCommunityIcons name="check-circle-outline" size={32} color="#fff"/>
+      )}
       </View>
   )
 
@@ -164,7 +170,7 @@ export default function Index() {
             overshootLeft={false}
             overshootRight={false}
             renderLeftActions={renderLeftActions}
-            renderRightActions={renderRightActions}
+            renderRightActions={() => renderRightActions(habit.$id)}
             onSwipeableOpen={(direction) => {
               if(direction === "left") {
                 handleDeleteHabit(habit.$id);
@@ -175,7 +181,7 @@ export default function Index() {
             }}
             >
               <Surface
-              style={styles.card}
+              style={[styles.card, isHabitCompleted(habit.$id) && styles.cardCompleted]}
               elevation={0}
               >
                 <View style={styles.cardContent}>
@@ -227,6 +233,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  cardCompleted: {
+    opacity: 0.6,
   },
   cardContent: {
     padding: 20,
