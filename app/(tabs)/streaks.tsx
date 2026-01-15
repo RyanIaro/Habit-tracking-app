@@ -4,7 +4,7 @@ import { Habit, HabitCompletion } from "@/types/database.type";
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { Text } from "react-native-paper";
+import { Card, Text } from "react-native-paper";
 
 export default function StreaksScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -99,14 +99,115 @@ export default function StreaksScreen() {
   // console.log(rankedHabits.map((h) => h.habit.title));
 
   return (
-    <View>
-      <Text>Habit streaks</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Habit streaks</Text>
+
+      {habits.length === 0 ? (
+        <View>
+          <Text>No habits yet. Add your first habit!</Text>
+        </View>
+      ) : (
+        rankedHabits.map(({habit, streak, bestStreak, total}, key) => (
+          <Card key={key} style={[styles.card, key === 0 && styles.firstCard]}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.habitTitle}>{habit.title}</Text>
+              <Text style={styles.habitDescription}>{habit.description}</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statBadge}>
+                  <Text style={styles.statBadgeText}> 🔥 {streak}</Text>
+                  <Text style={styles.statLabel}> Streak </Text>
+                </View>
+                <View style={styles.statBadgeGold}>
+                  <Text style={styles.statBadgeText}> 🏆 {bestStreak}</Text>
+                  <Text style={styles.statLabel}> BestStreak </Text>
+                </View>
+                <View style={styles.statBadgeGreen}>
+                  <Text style={styles.statBadgeText}> ✅ {total}</Text>
+                  <Text style={styles.statLabel}> Total </Text>
+                </View>
+              </View>
+            </Card.Content>
+          </Card>
+        ))
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    padding: 16,
+  },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  card: {
+    marginBottom: 18,
+    borderRadius: 18,
+    backgroundColor: "#fff",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+  },
+  firstCard: {
+    borderWidth: 2,
+    borderColor: "#7c4dff",
+  },
   habitTitle: {
-    
-  }
+    fontWeight: "bold",
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  habitDescription: {
+    color: "#6c6c80",
+    marginBottom: 8,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  statBadge: {
+    backgroundColor: "#fff3e0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: "center",
+    minWidth: 60,
+  },
+  statBadgeGold: {
+    backgroundColor: "#fffde7",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: "center",
+    minWidth: 60,
+  },
+  statBadgeGreen: {
+    backgroundColor: "#e8f5e9",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: "center",
+    minWidth: 60,
+  },
+  statBadgeText: {
+    fontWeight: "bold",
+    fontSize: 15,
+    color: "#22223b"
+  },
+  statLabel: {
+    fontSize: 11,
+    color: "#888",
+    marginTop: 2,
+    fontWeight: "500",
+  },
 })
