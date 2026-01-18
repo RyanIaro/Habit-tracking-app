@@ -87,8 +87,7 @@ export default function StreaksScreen() {
     let total = habitCompletions.length;
     
     let lastDate: Date | null = null;
-    // let currentStreak = 1;
-    let currentStreak = 0;
+    let currentStreak = 1;
 
     habitCompletions?.forEach((c) => {
       const date = new Date(c.completed_at);
@@ -99,13 +98,12 @@ export default function StreaksScreen() {
         } else {
           currentStreak = 1;
         }
-        // console.log(diff);
       } else {
-        if (currentStreak > bestStreak) bestStreak = currentStreak;
-        streak = currentStreak;
-        lastDate = date;
+        currentStreak = 1;
       }
-      // lastDate = date;
+      if (currentStreak > bestStreak) bestStreak = currentStreak;
+      streak = currentStreak;
+      lastDate = date;
     });
 
     return {streak, bestStreak, total};
@@ -116,10 +114,9 @@ export default function StreaksScreen() {
     return { habit, streak, bestStreak, total };
   })
   
-  const rankedHabits = habitStreaks.sort(
-    (a,b) => a.bestStreak - b.bestStreak
+  const rankedHabits = habitStreaks.filter((hs) => hs.total > 0).sort(
+    (a,b) => b.bestStreak - a.bestStreak
   );
-  // console.log(rankedHabits.map((h) => h.habit.title));
 
   const badgeStyles = [styles.badge1, styles.badge2, styles.badge3]
 
