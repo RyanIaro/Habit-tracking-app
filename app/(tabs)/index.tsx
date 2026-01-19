@@ -11,7 +11,7 @@ import { Button, Surface, Text } from "react-native-paper";
 export default function Index() {
   const { signOut, user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>();
-  const [completed, setCompleted] = useState<string[]>();
+  const [completed, setCompleted] = useState<string[]>([]);
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
 
   const fetchHabits = useCallback(async () => {
@@ -82,6 +82,17 @@ export default function Index() {
   
   const handleDeleteHabit = async (id: string) => {
     try {
+      const habitCompletions = await databases.listRows({
+        databaseId,
+        tableId: completionsTableId,
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.equal("habit_id", id),
+        ],
+      });
+      habitCompletions.rows.forEach(async (hc) => {
+        await databases.deleteRow({databaseId, tableId: completionsTableId, rowId: hc.$id});
+      })
       await databases.deleteRow({databaseId, tableId: habitsTableId, rowId: id});
     } catch (error) {
       console.error(error);
