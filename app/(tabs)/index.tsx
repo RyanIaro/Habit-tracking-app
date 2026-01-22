@@ -14,6 +14,69 @@ export default function Index() {
   const [completed, setCompleted] = useState<string[]>([]);
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
 
+  const resetMissedStreak = async (id: string, frequency: string) => {
+    try {
+      const response = await databases.listRows({
+        databaseId,
+        tableId: completionsTableId,
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.equal("habit_id", id),
+          Query.limit(1),
+          Query.orderDesc('$created_at')
+        ],
+      })
+      const lastCompletion = response.rows[0] as HabitCompletion;
+      const today = new Date();
+      const lastComptetedDate = new Date(lastCompletion.completed_at);
+      today.setHours(0, 0, 0, 0);
+      lastComptetedDate.setHours(0, 0, 0, 0);
+      let shouldReset = false;
+      const getDiffMs = (d1:Date, d2:Date):number => {
+        return Math.abs(d2.getTime() - d1.getTime())
+      }
+
+      //getting the monday of the week
+      const startOfWeek = (date: Date):Date => {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        d.setDate(diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      switch (frequency) {
+        case "daily":
+          shouldReset = getDiffMs(today, lastComptetedDate) / (1000 * 60 * 60 * 24) >= 2;
+          break;
+        case "weekly":
+          shouldReset = getDiffMs(startOfWeek(today), startOfWeek(lastComptetedDate)) /
+          (1000 * 60 * 60 * 24 *7) >= 2
+          break;
+        case "monthly":
+          shouldReset = Math.abs(
+            (today.getFullYear() - lastComptetedDate.getFullYear()) * 12 +
+            (today.getMonth() - lastComptetedDate.getMonth())
+          ) >= 2;
+          break;
+      }
+
+      if(shouldReset) {
+        await databases.updateRow({
+          databaseId,
+          tableId: habitsTableId,
+          rowId: id,
+          data: {
+            streak_count: 0,
+          }
+        })
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+  
   const fetchHabits = useCallback(async () => {
     try {
       const response = await databases.listRows({
@@ -22,7 +85,8 @@ export default function Index() {
         queries: [Query.equal("user_id", user?.$id ?? "")],
       });
       // console.log(response.rows);
-      setHabits(response.rows as Habit[])
+      setHabits(response.rows as Habit[]);
+      habits?.forEach((h) => resetMissedStreak(h.$id, h.frequency))
     } catch (error) {
       console.error(error);
     }
@@ -41,21 +105,21 @@ export default function Index() {
         ],
       });
       const completedHabits = response.rows as HabitCompletion[];
-      setCompleted(completedHabits.map((c) => c.habit_id));
+      setCompleted([...completed, ...completedHabits.map((c) => c.habit_id)]);
     } catch (error) {
       console.error(error);
     }
   }, [user]);
-  
+
   useEffect(() => {
     if (user) {
       const habitsChannel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
       const habitsSubscription = client.subscribe(habitsChannel, (response: RealtimeResponse) => {
-        if(response.events.some((e) => e.includes(".create"))) {
-          fetchHabits();
-        } else if (response.events.some((e) => e.includes(".update"))) {
-          fetchHabits();
-        } else if (response.events.some((e) => e.includes(".delete"))) {
+        if(
+          response.events.some((e) => e.includes(".create")) ||
+          response.events.some((e) => e.includes(".update")) ||
+          response.events.some((e) => e.includes(".delete"))
+        ) {
           fetchHabits();
         }
       });
@@ -78,8 +142,6 @@ export default function Index() {
     }
   },[user, fetchHabits, fetchTodayCompletions]);
 
-  
-  
   const handleDeleteHabit = async (id: string) => {
     try {
       const habitCompletions = await databases.listRows({
@@ -98,6 +160,7 @@ export default function Index() {
       console.error(error);
     }
   }
+
   const handleCompleteHabit = async (id: string) => {
     if (!user || completed?.includes(id)) return;
     try {
