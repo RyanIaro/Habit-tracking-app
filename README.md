@@ -1,50 +1,47 @@
-# Welcome to your Expo app 👋
+# Habit Tracker Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 📌 Description
+A habit-tracking mobile application that helps users track daily habits and build consistency over time.
+Developed with the help of a tutorial to learn React Native with Expo and uses Apprwrite to handle the backend.
 
-## Get started
+This project is currently **a work in progress** and is being actively developed.
 
-1. Install dependencies
+## 🛠️ Tech Stack
+- React Native
+- Expo
+- TypeScript
+- Appwrite
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
+- Authentication with email and password
+- Create and manage daily habits(weekly and monthly in progress)
+- Track habit completion and streaks
+- Habits ranked by consistency
+- Clean and simple mobile UI
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+## 🚀 Getting Started
+1. Clone the repository:
 ```bash
-npm run reset-project
+git clone https://github.com/RyanIaro/Habit-tracking-app.git
+```
+2. Install dependencies:
+```bash
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+3. Start the Expo development server:
+```bash
+npx expo start
+```
 
-## Learn more
+## 📚 What I Learned
+- Building mobile apps with React Native and Expo
+- Improved TypeScript skills
+- Using Appwrite's databases and query class
+- Mobile UI considerations
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## ⚠️ Notes
+- Started with a tutorial video for learning purposes
+- Project still in development
+- Currently improving/adding features
+- Not deployed yet
