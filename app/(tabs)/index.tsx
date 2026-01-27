@@ -10,9 +10,23 @@ import { Button, Surface, Text } from "react-native-paper";
 
 export default function Index() {
   const { signOut, user } = useAuth();
-  const [habits, setHabits] = useState<Habit[]>();
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null}>({})
+
+  const getDiffMs = (d1:Date, d2:Date):number => {
+    return Math.abs(d2.getTime() - d1.getTime())
+  }
+
+  //get the monday of the week
+  const startOfWeek = (date: Date):Date => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
 
   const resetMissedStreak = async (id: string, frequency: string) => {
     try {
@@ -23,7 +37,7 @@ export default function Index() {
           Query.equal("user_id", user?.$id ?? ""),
           Query.equal("habit_id", id),
           Query.limit(1),
-          Query.orderDesc('$created_at')
+          Query.orderDesc('$createdAt')
         ],
       })
       const lastCompletion = response.rows[0] as HabitCompletion;
@@ -32,19 +46,6 @@ export default function Index() {
       today.setHours(0, 0, 0, 0);
       lastComptetedDate.setHours(0, 0, 0, 0);
       let shouldReset = false;
-      const getDiffMs = (d1:Date, d2:Date):number => {
-        return Math.abs(d2.getTime() - d1.getTime())
-      }
-
-      //getting the monday of the week
-      const startOfWeek = (date: Date):Date => {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        d.setDate(diff);
-        d.setHours(0, 0, 0, 0);
-        return d;
-      }
 
       switch (frequency) {
         case "daily":
@@ -104,8 +105,61 @@ export default function Index() {
           Query.greaterThanEqual("completed_at", today.toISOString())
         ],
       });
-      const completedHabits = response.rows as HabitCompletion[];
-      setCompleted([...completed, ...completedHabits.map((c) => c.habit_id)]);
+      const dailyCompleted = response.rows as HabitCompletion[];
+      setCompleted((prev) => [
+        ...new Set([...prev, ...dailyCompleted.map((c) => c.habit_id)])
+      ]);
+      
+    } catch (error) {
+      console.error(error);
+    }
+  }, [user]);
+
+  const fetchWeekCompletions = useCallback(async () => {
+    try {
+      let thisMonday = startOfWeek(new Date());
+      const weeklyHabits = habits.filter((h) => h.frequency === "weekly");
+      weeklyHabits.forEach(async (wh) => {
+        const response = await databases.listRows({
+          databaseId,
+          tableId: completionsTableId,
+          queries: [
+            Query.equal("user_id", user?.$id ?? ""),
+            Query.equal("habit_id", wh.$id),
+            Query.greaterThanEqual("completed_at", thisMonday.toISOString())
+          ],
+        });
+        const weeklyCompleted = response.rows as HabitCompletion[];
+        setCompleted((prev) => [
+          ...new Set([...prev, ...weeklyCompleted.map((c) => c.habit_id)])
+        ]);
+      })
+    } catch (error) {
+      console.error(error);
+    }
+  }, [user]);
+
+  const fetchMonthCompletions = useCallback(async () => {
+    try {
+      let theFirst = new Date();
+      theFirst.setDate(1);
+      theFirst.setHours(0, 0, 0, 0);
+      const monthlyHabits = habits.filter((h) => h.frequency === "monthly");
+      monthlyHabits.forEach(async (mh) => {
+        const response = await databases.listRows({
+          databaseId,
+        tableId: completionsTableId,
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.equal("habit_id", mh.$id),
+          Query.greaterThanEqual("completed_at", theFirst.toISOString())
+        ],
+      });
+      const monthlyCompleted = response.rows as HabitCompletion[];
+      setCompleted((prev) => [
+        ...new Set([...prev, ...monthlyCompleted.map((c) => c.habit_id)])
+      ]);
+    })
     } catch (error) {
       console.error(error);
     }
@@ -128,11 +182,15 @@ export default function Index() {
       const completionsSubscription = client.subscribe(completionsChannel, (response: RealtimeResponse) => {
         if(response.events.some((e) => e.includes(".create"))) {
           fetchTodayCompletions();
+          fetchWeekCompletions();
+          fetchMonthCompletions();
         }
       });
 
       fetchHabits();
       fetchTodayCompletions();
+      fetchWeekCompletions();
+      fetchMonthCompletions();
 
       // unsubscribe      
       return () => {
@@ -140,7 +198,13 @@ export default function Index() {
         completionsSubscription();
       };
     }
-  },[user, fetchHabits, fetchTodayCompletions]);
+  },[
+      user,
+      fetchHabits,
+      fetchTodayCompletions,
+      fetchWeekCompletions,
+      fetchMonthCompletions
+    ]);
 
   const handleDeleteHabit = async (id: string) => {
     try {

@@ -2,7 +2,7 @@
 
 ## 📌 Description
 A habit-tracking mobile application that helps users track daily habits and build consistency over time.
-Developed with the help of a tutorial to learn React Native with Expo and uses Apprwrite to handle the backend.
+Developed with the help of a tutorial to learn React Native with the Expo framework and the use of [Apprwrite](appwrite.io) to handle the backend.
 
 This project is currently **a work in progress** and is being actively developed.
 
@@ -14,7 +14,7 @@ This project is currently **a work in progress** and is being actively developed
 
 ## ✨ Features
 - Authentication with email and password
-- Create and manage daily habits(weekly and monthly in progress)
+- Create and manage daily, weekly or monthly habits
 - Track habit completion and streaks
 - Habits ranked by consistency
 - Clean and simple mobile UI
