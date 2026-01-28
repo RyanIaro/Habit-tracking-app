@@ -28,55 +28,60 @@ export default function Index() {
     return d;
   }
 
-  const resetMissedStreak = async (id: string, frequency: string) => {
+  const resetMissedStreak = useCallback(async (habitList: Habit[]) => {
     try {
-      const response = await databases.listRows({
-        databaseId,
-        tableId: completionsTableId,
-        queries: [
-          Query.equal("user_id", user?.$id ?? ""),
-          Query.equal("habit_id", id),
-          Query.limit(1),
-          Query.orderDesc('$createdAt')
-        ],
-      })
-      const lastCompletion = response.rows[0] as HabitCompletion;
       const today = new Date();
-      const lastComptetedDate = new Date(lastCompletion.completed_at);
       today.setHours(0, 0, 0, 0);
-      lastComptetedDate.setHours(0, 0, 0, 0);
-      let shouldReset = false;
 
-      switch (frequency) {
-        case "daily":
-          shouldReset = getDiffMs(today, lastComptetedDate) / (1000 * 60 * 60 * 24) >= 2;
-          break;
-        case "weekly":
-          shouldReset = getDiffMs(startOfWeek(today), startOfWeek(lastComptetedDate)) /
-          (1000 * 60 * 60 * 24 *7) >= 2
-          break;
-        case "monthly":
-          shouldReset = Math.abs(
-            (today.getFullYear() - lastComptetedDate.getFullYear()) * 12 +
-            (today.getMonth() - lastComptetedDate.getMonth())
-          ) >= 2;
-          break;
-      }
-
-      if(shouldReset) {
-        await databases.updateRow({
+      for (const h of habitList) {
+        const response = await databases.listRows({
           databaseId,
-          tableId: habitsTableId,
-          rowId: id,
-          data: {
-            streak_count: 0,
-          }
+          tableId: completionsTableId,
+          queries: [
+            Query.equal("user_id", user?.$id ?? ""),
+            Query.equal("habit_id", h.$id),
+            Query.limit(1),
+            Query.orderDesc('$createdAt')
+          ],
         })
+        const lastCompletion = response.rows[0] as HabitCompletion;
+        const lastComptetedDate = new Date(lastCompletion.completed_at);
+        lastComptetedDate.setHours(0, 0, 0, 0);
+        let shouldReset = false;
+
+        switch (h.frequency) {
+          case "daily":
+            shouldReset = getDiffMs(today, lastComptetedDate) / (1000 * 60 * 60 * 24) >= 2;
+            break;
+          case "weekly":
+            shouldReset = getDiffMs(startOfWeek(today), startOfWeek(lastComptetedDate)) /
+            (1000 * 60 * 60 * 24 *7) >= 2
+            break;
+          case "monthly":
+            shouldReset = Math.abs(
+              (today.getFullYear() - lastComptetedDate.getFullYear()) * 12 +
+              (today.getMonth() - lastComptetedDate.getMonth())
+            ) >= 2;
+            break;
+        }
+
+        if(shouldReset) {
+          // console.log(h.title + " " + h.frequency);
+          
+          await databases.updateRow({
+            databaseId,
+            tableId: habitsTableId,
+            rowId: h.$id,
+            data: {
+              streak_count: 0,
+            }
+          })
+        }
       }
     } catch (error) {
       console.error(error);
     }
-  }
+  }, [user])
   
   const fetchHabits = useCallback(async () => {
     try {
@@ -86,10 +91,12 @@ export default function Index() {
         queries: [Query.equal("user_id", user?.$id ?? "")],
       });
       // console.log(response.rows);
-      setHabits(response.rows as Habit[]);
-      habits?.forEach((h) => resetMissedStreak(h.$id, h.frequency))
+      const rows = response.rows as Habit[];
+      setHabits(rows);
+      return rows;
     } catch (error) {
       console.error(error);
+      return [] as Habit[];
     }
   }, [user]);
 
@@ -115,11 +122,13 @@ export default function Index() {
     }
   }, [user]);
 
-  const fetchWeekCompletions = useCallback(async () => {
+  const fetchWeekCompletions = useCallback(async (habitList: Habit[]) => {
     try {
       let thisMonday = startOfWeek(new Date());
-      const weeklyHabits = habits.filter((h) => h.frequency === "weekly");
-      weeklyHabits.forEach(async (wh) => {
+      const weeklyHabits = habitList.filter((h) => h.frequency === "weekly");
+
+      for (const wh of weeklyHabits) {
+        console.log("weekly inside loop");
         const response = await databases.listRows({
           databaseId,
           tableId: completionsTableId,
@@ -133,19 +142,20 @@ export default function Index() {
         setCompleted((prev) => [
           ...new Set([...prev, ...weeklyCompleted.map((c) => c.habit_id)])
         ]);
-      })
+      }
     } catch (error) {
       console.error(error);
     }
   }, [user]);
 
-  const fetchMonthCompletions = useCallback(async () => {
+  const fetchMonthCompletions = useCallback(async (habitList: Habit[]) => {
     try {
       let theFirst = new Date();
       theFirst.setDate(1);
       theFirst.setHours(0, 0, 0, 0);
-      const monthlyHabits = habits.filter((h) => h.frequency === "monthly");
-      monthlyHabits.forEach(async (mh) => {
+      const monthlyHabits = habitList.filter((h) => h.frequency === "monthly");
+      console.log("monthly out of loop");
+      for (const mh of monthlyHabits) {
         const response = await databases.listRows({
           databaseId,
         tableId: completionsTableId,
@@ -159,7 +169,7 @@ export default function Index() {
       setCompleted((prev) => [
         ...new Set([...prev, ...monthlyCompleted.map((c) => c.habit_id)])
       ]);
-    })
+    }
     } catch (error) {
       console.error(error);
     }
@@ -179,18 +189,22 @@ export default function Index() {
       });
       
       const completionsChannel = `databases.${databaseId}.collections.${completionsTableId}.documents`;
-      const completionsSubscription = client.subscribe(completionsChannel, (response: RealtimeResponse) => {
+      const completionsSubscription = client.subscribe(completionsChannel, async (response: RealtimeResponse) => {
         if(response.events.some((e) => e.includes(".create"))) {
-          fetchTodayCompletions();
-          fetchWeekCompletions();
-          fetchMonthCompletions();
+          await fetchTodayCompletions();
+          const latestHabits = await fetchHabits();
+          await fetchWeekCompletions(latestHabits);
+          await fetchMonthCompletions(latestHabits);
         }
       });
 
-      fetchHabits();
-      fetchTodayCompletions();
-      fetchWeekCompletions();
-      fetchMonthCompletions();
+      (async () => {
+        const latestHabits = await fetchHabits();
+        await fetchTodayCompletions();
+        await fetchWeekCompletions(latestHabits);
+        await fetchMonthCompletions(latestHabits);
+        await resetMissedStreak(latestHabits);
+      })();
 
       // unsubscribe      
       return () => {
@@ -201,9 +215,7 @@ export default function Index() {
   },[
       user,
       fetchHabits,
-      fetchTodayCompletions,
-      fetchWeekCompletions,
-      fetchMonthCompletions
+      fetchTodayCompletions
     ]);
 
   const handleDeleteHabit = async (id: string) => {
@@ -216,9 +228,9 @@ export default function Index() {
           Query.equal("habit_id", id),
         ],
       });
-      habitCompletions.rows.forEach(async (hc) => {
+      for (const hc of habitCompletions.rows) {
         await databases.deleteRow({databaseId, tableId: completionsTableId, rowId: hc.$id});
-      })
+      }
       await databases.deleteRow({databaseId, tableId: habitsTableId, rowId: id});
     } catch (error) {
       console.error(error);
