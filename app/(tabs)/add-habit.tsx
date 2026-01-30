@@ -37,7 +37,10 @@ export default function AddHabitScreen() {
           creation_date: new Date().toISOString(),
         }
       });
-
+      
+      setTitle("");
+      setDescription("");
+      setFrequency("daily")
       router.back();
     } catch (error) {
       if (error instanceof Error) {
@@ -54,6 +57,7 @@ export default function AddHabitScreen() {
       label={"Title"}
       mode="outlined"
       style={styles.input}
+      value={title}
       onChangeText={setTitle}
       />
       <TextInput

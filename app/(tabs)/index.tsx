@@ -65,9 +65,7 @@ export default function Index() {
             break;
         }
 
-        if(shouldReset) {
-          // console.log(h.title + " " + h.frequency);
-          
+        if(shouldReset) {          
           await databases.updateRow({
             databaseId,
             tableId: habitsTableId,
@@ -90,7 +88,6 @@ export default function Index() {
         tableId: habitsTableId,
         queries: [Query.equal("user_id", user?.$id ?? "")],
       });
-      // console.log(response.rows);
       const rows = response.rows as Habit[];
       setHabits(rows);
       return rows;
@@ -128,7 +125,6 @@ export default function Index() {
       const weeklyHabits = habitList.filter((h) => h.frequency === "weekly");
 
       for (const wh of weeklyHabits) {
-        console.log("weekly inside loop");
         const response = await databases.listRows({
           databaseId,
           tableId: completionsTableId,
@@ -154,7 +150,7 @@ export default function Index() {
       theFirst.setDate(1);
       theFirst.setHours(0, 0, 0, 0);
       const monthlyHabits = habitList.filter((h) => h.frequency === "monthly");
-      console.log("monthly out of loop");
+      
       for (const mh of monthlyHabits) {
         const response = await databases.listRows({
           databaseId,
