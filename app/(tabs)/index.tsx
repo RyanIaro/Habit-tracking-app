@@ -34,18 +34,7 @@ export default function Index() {
       today.setHours(0, 0, 0, 0);
 
       for (const h of habitList) {
-        const response = await databases.listRows({
-          databaseId,
-          tableId: completionsTableId,
-          queries: [
-            Query.equal("user_id", user?.$id ?? ""),
-            Query.equal("habit_id", h.$id),
-            Query.limit(1),
-            Query.orderDesc('$createdAt')
-          ],
-        })
-        const lastCompletion = response.rows[0] as HabitCompletion;
-        const lastComptetedDate = new Date(lastCompletion.completed_at);
+        let lastComptetedDate = new Date(h.last_completed);
         lastComptetedDate.setHours(0, 0, 0, 0);
         let shouldReset = false;
 
@@ -150,7 +139,7 @@ export default function Index() {
       theFirst.setDate(1);
       theFirst.setHours(0, 0, 0, 0);
       const monthlyHabits = habitList.filter((h) => h.frequency === "monthly");
-      
+
       for (const mh of monthlyHabits) {
         const response = await databases.listRows({
           databaseId,
