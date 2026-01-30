@@ -279,7 +279,7 @@ export default function Index() {
         variant="headlineSmall"
         style={styles.title}
         >
-          {"Today\u2019s habit"}
+          {"Your habits"}
         </Text>
         <Button
         mode="text"
@@ -316,24 +316,28 @@ export default function Index() {
             }}
             >
               <Surface
-              style={[styles.card, isHabitCompleted(habit.$id) && styles.cardCompleted]}
+              style={[
+                styles.card,
+                // isHabitCompleted(habit.$id) && styles.cardCompleted
+              ]}
               elevation={0}
               >
                 <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{habit.title}</Text>
-                  <Text style={styles.cardDescription}>{habit.description}</Text>
-                  <View style={styles.cardFooter}>
-                    <View style={styles.streakBadge}>
-                      <MaterialCommunityIcons name="fire" size={18} color={"#ff9800"}/>
-                      <Text style={styles.streakText}>{habit.streak_count} day(s) streak</Text>
+                    <Text style={styles.cardTitle}>{habit.title}</Text>
+                    <Text style={styles.cardDescription}>{habit.description}</Text>
+                    <View style={styles.cardFooter}>
+                      <View style={styles.streakBadge}>
+                        <MaterialCommunityIcons name="fire" size={18} color={"#ff9800"}/>
+                        <Text style={styles.streakText}>{habit.streak_count} day(s) streak</Text>
+                      </View>
+                      <View style={styles.frequencyBadge}>
+                        <Text style={styles.frequencyText}>{
+                          habit.frequency.charAt(0).toUpperCase() +
+                          habit.frequency.slice(1)
+                        }</Text>
+                      </View>
                     </View>
-                    <View style={styles.frequencyBadge}>
-                      <Text style={styles.frequencyText}>{
-                        habit.frequency.charAt(0).toUpperCase() +
-                        habit.frequency.slice(1)
-                      }</Text>
-                    </View>
-                  </View>
+                  {isHabitCompleted(habit.$id) && (<View style={styles.cardCompleted}/>)}
                 </View>
               </Surface>
             </Swipeable>
@@ -371,6 +375,15 @@ const styles = StyleSheet.create({
   },
   cardCompleted: {
     opacity: 0.6,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+    marginBottom: 18,
+    borderRadius: 18,
+    backgroundColor: "#f7f2fa",
   },
   cardContent: {
     padding: 20,

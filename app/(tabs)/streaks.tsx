@@ -154,7 +154,7 @@ export default function StreaksScreen() {
                     <Text style={styles.statBadgeText}> 🔥 {streak}</Text>
                     <Text style={styles.statLabel}> Streak </Text>
                   </View>
-                  <View style={styles.statBadgeGold}>
+                  <View style={[styles.statBadgeGold, key === 0 && styles.firstStatBadge]}>
                     <Text style={styles.statBadgeText}> 🏆 {bestStreak}</Text>
                     <Text style={styles.statLabel}> BestStreak </Text>
                   </View>
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
   },
   firstCard: {
     borderWidth: 2,
-    borderColor: "#7c4dff",
-    shadowColor: "#3d15ee",
+    borderColor: "#ffd700",
+    shadowColor: "#afc013",
   },
   habitTitle: {
     fontWeight: "bold",
@@ -221,6 +221,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     alignItems: "center",
     minWidth: 60,
+  },
+  firstStatBadge: {
+    borderWidth: 1,
+    borderColor: "#ffd700"
   },
   statBadgeGold: {
     backgroundColor: "#fffde7",
