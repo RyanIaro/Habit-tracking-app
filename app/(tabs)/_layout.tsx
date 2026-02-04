@@ -17,7 +17,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: "#666666",
         }}>
         <Tabs.Screen name="index" options={{
-          title:"Today's habits",
+          title:"Your habits",
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
             name="calendar-today"
