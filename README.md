@@ -15,8 +15,9 @@ This project is currently **a work in progress** and is being actively developed
 ## ✨ Features
 - Authentication with email and password
 - Create and manage daily, weekly or monthly habits
+- Swipe habit to left to complete and right to delete
 - Track habit completion and streaks
-- Habits ranked by consistency
+- Habits ranked by streak consistency
 - Clean and simple mobile UI
 
 ## 🚀 Getting Started
@@ -45,3 +46,16 @@ npx expo start
 - Project still in development
 - Currently improving/adding features
 - Not deployed yet
+
+## 📸 Screenshots
+- Sign up/Sign in
+![sign up](assets/images/account-creation.jpg)
+
+- Habit list
+![sign up](assets/images/your-habits.jpg)
+
+- Streaks ranking
+![sign up](assets/images/habit-streaks.jpg)
+
+- Add habit
+![sign up](assets/images/add-habit.jpg)
