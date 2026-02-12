@@ -16,9 +16,10 @@ export default function StreaksScreen() {
       const response = await databases.listRows({
         databaseId,
         tableId: habitsTableId,
-        queries: [Query.equal("user_id", user?.$id ?? "")],
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.limit(100)],
       });
-      // console.log(response.rows);
       setHabits(response.rows as Habit[])
     } catch (error) {
       console.error(error);
@@ -30,7 +31,10 @@ export default function StreaksScreen() {
       const response = await databases.listRows({
         databaseId,
         tableId: completionsTableId,
-        queries: [Query.equal("user_id", user?.$id ?? "")],
+        queries: [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.limit(100)
+        ],
       });
       setCompleted(response.rows as HabitCompletion[]);
     } catch (error) {
@@ -41,22 +45,22 @@ export default function StreaksScreen() {
   useEffect(() => {
     if (user) {
       const habitsChannel = `databases.${databaseId}.collections.${habitsTableId}.documents`;
-            const habitsSubscription = client.subscribe(habitsChannel, (response: RealtimeResponse) => {
-              if(response.events.some((e) => e.includes(".create"))) {
-                fetchHabits();
-              } else if (response.events.some((e) => e.includes(".update"))) {
-                fetchHabits();
-              } else if (response.events.some((e) => e.includes(".delete"))) {
-                fetchHabits();
-              }
-            });
-            
-            const completionsChannel = `databases.${databaseId}.collections.${completionsTableId}.documents`;
-            const completionsSubscription = client.subscribe(completionsChannel, (response: RealtimeResponse) => {
-              if(response.events.some((e) => e.includes(".create"))) {
-                fetchCompletions();
-              }
-            });
+      const habitsSubscription = client.subscribe(habitsChannel, (response: RealtimeResponse) => {
+        if(
+          response.events.some((e) => e.includes(".create")) ||
+          response.events.some((e) => e.includes(".update")) ||
+          response.events.some((e) => e.includes(".delete"))
+        ) {
+          fetchHabits();
+        }
+      });
+      
+      const completionsChannel = `databases.${databaseId}.collections.${completionsTableId}.documents`;
+      const completionsSubscription = client.subscribe(completionsChannel, (response: RealtimeResponse) => {
+        if(response.events.some((e) => e.includes(".create"))) {
+          fetchCompletions();
+        }
+      });
 
       fetchHabits();
       fetchCompletions();
@@ -77,7 +81,7 @@ export default function StreaksScreen() {
   const getStreakData = (habitId: string): StreakData => {
     const habitCompletions = completed.filter((c) => c.habit_id === habitId).sort(
       (a, b) => new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime()
-    ); 
+    );
     
     if (habitCompletions.length === 0) return {streak: 0, bestStreak: 0, total: 0};
 
