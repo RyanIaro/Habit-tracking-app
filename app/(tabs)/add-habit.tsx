@@ -64,6 +64,7 @@ export default function AddHabitScreen() {
       label={"Description"}
       mode="outlined"
       style={styles.input}
+      value={description}
       onChangeText={setDescription}
       />
       <View style={styles.frequencyContainer}>
