@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "react-native-w-expo",
+    "name": "Habit tracker",
     "slug": "react-native-w-expo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ryaniaro.habittracker"
     },
     "web": {
       "output": "static",
@@ -44,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a4e243c2-1cb8-4ce0-aa7d-8739f43abbd8"
+      }
     }
   }
 }
