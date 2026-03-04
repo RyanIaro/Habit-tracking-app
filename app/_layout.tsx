@@ -95,8 +95,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 32,
     marginHorizontal: 24,
+    backgroundColor: "#fff"
   },
   noInternetText: {
+    textAlign: "center",
     fontSize: 20,
     marginBottom: 12,
   },
