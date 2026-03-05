@@ -12,6 +12,25 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isLoadingUser } = useAuth();
   const segments = useSegments();
+
+  useEffect(() => {
+    if(isLoadingUser) return;
+    const isAuthGroup = segments[0] === "auth";
+    if (!user && !isAuthGroup) {
+      router.replace('/auth');
+    } else if (user && isAuthGroup) {
+      router.replace('/')
+    }
+  }, [user, segments, isLoadingUser]);
+
+  return (
+    <>
+      {children}
+    </>
+  );
+}
+
+export default function RootLayout() {
   const isOnline = useInternetStatus();
   const [retryKey, setRetryKey] = useState<number>(0);
   const wasOffline = useRef(false);
@@ -20,57 +39,26 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     if(!isOnline) {
       wasOffline.current = true;
       return;
-    }
-
-    if(isOnline && wasOffline.current) {
+    } else if(isOnline && wasOffline.current) {
       wasOffline.current = false;
       setRetryKey(prev => prev++);
     }
-
-    const isAuthGroup = segments[0] === "auth";
-    if (!user && !isAuthGroup && !isLoadingUser) {
-      router.replace('/auth');
-    } else if (user && isAuthGroup && !isLoadingUser) {
-      router.replace('/')
-    }
-  }, [user, segments, isOnline]);
-
-  const handleReload = () => {
-    setRetryKey(prev => prev++);
-  }
+  }, [isOnline]);
 
   return (
     <>
-      {!isOnline ? 
-        <View style={styles.overlay}>
-          <MaterialIcons
-          name="wifi-off"
-          size={64}
-          color="#8760be"
-          />
-          <Text style={styles.noInternetText}>
-            {"No internet connection. Please connect your device to internet."}
-          </Text>
-          {/* <Button
-          mode="outlined"
-          style={styles.retryButton}
-          onPress={handleReload}
-          >
-            {"Retry"}
-          </Button> */}
-        </View>
-      :
-        <>
-          {children}
-        </>
-      }
-    </>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <>
+    {!isOnline ? (
+      <View style={styles.overlay}>
+        <MaterialIcons
+        name="wifi-off"
+        size={64}
+        color="#8760be"
+        />
+        <Text style={styles.noInternetText}>
+          {"No internet connection. Please connect your device to internet."}
+        </Text>
+      </View>
+    ) : (
       <GestureHandlerRootView>
         <AuthProvider>
           {/* <PaperProvider> */}
@@ -84,6 +72,7 @@ export default function RootLayout() {
           {/* </PaperProvider> */}
         </AuthProvider>
       </GestureHandlerRootView>
+    )}
     </>
   );
 }
